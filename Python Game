@@ -144,14 +144,14 @@ def Health_Setting():
 def Winner():
     global running
     if Red_Health <= 0:
-        Win_Text = "RED IS MY BITCH"
+        Win_Text = "BLUE WINS"
         Text = Winner_Font.render(Win_Text,1,"Yellow")
         Canvas.blit(Text,((Canvas_Width//2) - Text.get_width()//2, (Canvas_Height//2) - Text.get_height()//2))
         pygame.display.update()
         pygame.time.delay(2000)
         running = False
     if Blue_Health <= 0:
-        Win_Text = "BLUE IS MY BITCH"
+        Win_Text = "RED WINS"
         Text = Winner_Font.render(Win_Text,1,"Yellow")
         Canvas.blit(Text,((Canvas_Width//2) - Text.get_width()//2, (Canvas_Height//2) - Text.get_height()//2))
         pygame.display.update()
