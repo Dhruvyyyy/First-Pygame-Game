@@ -1,0 +1,211 @@
+# ***This game was inspired by Tech with Tim and I used his tutorial on Pygame to structure my game***
+
+# My objective with this game as to build on my fundamentals and use concepts like variables, loops, conditionals and functions in real scenarios.
+# I wanted to create a well thought out game where it can be played casually between 2 players.
+# It does not seem to be optimised since it does not start immediately. I would appreciate any constructive criticism.
+
+
+import pygame
+import os
+import math
+import time
+pygame.font.init()
+pygame.mixer.init()
+fps = 60
+Canvas_Height = 820 #720
+Canvas_Width = 1550 #1280
+speed = 15
+
+pygame.init()
+Canvas = pygame.display.set_mode((Canvas_Width, Canvas_Height))
+clock = pygame.time.Clock()
+running = True
+
+Health_Font = pygame.font.SysFont("Act of Rejection", 100)
+Winner_Font = pygame.font.SysFont("Act of Rejection", 150)
+Countdown_Font = pygame.font.SysFont("Act of Rejection", 150)
+
+Ship_Width,Ship_Height = 48,66
+
+Background = pygame.image.load("C:\\Users\\User\\Desktop\\Pygame\\space.jpg")
+Blue_Ship = pygame.image.load("C:\\Users\\User\\Desktop\\Pygame\\Blue_Ship.png")
+Blue_Ship = pygame.transform.rotate(Blue_Ship,(270))
+Blue_Ship = pygame.transform.scale(Blue_Ship, (Ship_Width, Ship_Height))
+Red_Ship = pygame.image.load("C:\\Users\\User\\Desktop\\Pygame\\Red_Ship.png")
+Red_Ship = pygame.transform.rotate(Red_Ship,(90))
+Red_Ship = pygame.transform.scale(Red_Ship, (Ship_Width, Ship_Height))
+
+x_pos_border = Canvas_Width//2-15
+
+imageWidth, imageHeight = Background.get_size()
+Red_Ship_Width, Red_Ship_Height = Red_Ship.get_size()
+Blue_Ship_Width,Blue_Ship_Height = Blue_Ship.get_size()
+
+width_range_background = (Canvas_Width // imageWidth) +1
+height_range_background = (Canvas_Height// imageHeight) +1
+
+Missile = pygame.image.load("C:\\Users\\User\\Desktop\\Pygame\\b2_01.png")
+Missile = pygame.transform.rotate(Missile,(270))
+Missile = pygame.transform.scale(Missile,(90,15))
+Missile2 = pygame.transform.rotate(Missile,(180))
+Blue_x,Blue_y = 100,100
+Red_x,Red_y = Canvas_Width - 100,100
+
+blue_bullets = []
+red_bullets = []
+
+red_bullet_cooldown,blue_bullet_cooldown = 0.2,0.2
+red_last_shot_time, blue_last_shot_time= 0,0
+
+Red_Hit = pygame.USEREVENT+1
+Blue_Hit = pygame.USEREVENT+2
+
+Red_Health = 10
+Blue_Health = 10
+
+Countdown = 3
+last_count = pygame.time.get_ticks()
+
+Blue_Bullet_Sound = pygame.mixer.Sound("C:\\Users\\User\\Desktop\\Pygame\\bluemp3.mp3")
+Red_Bullet_Sound = pygame.mixer.Sound("C:\\Users\\User\\Desktop\\Pygame\\red.wav")
+
+show_shoot_text = True
+shoot_text_start_time = 0
+
+
+def Blue_Ship_Controls():
+    global Blue_x
+    global Blue_y
+    global Blue_Ship
+    if pygame.key.get_pressed()[pygame.K_a] and Blue_x > 0:
+        Blue_x -= speed
+    if pygame.key.get_pressed()[pygame.K_d] and Blue_x < Canvas_Width -60:
+        Blue_x += speed
+    if pygame.key.get_pressed()[pygame.K_s] and Blue_y <= Canvas_Height -50:
+        Blue_y += speed
+    if pygame.key.get_pressed()[pygame.K_w] and 0 <= Blue_y:
+        Blue_y -= speed
+
+def Red_Ship_Controls():
+    global Red_x
+    global Red_y
+    if pygame.key.get_pressed()[pygame.K_LEFT] and Red_x > 0:
+        Red_x -= speed
+    if pygame.key.get_pressed()[pygame.K_RIGHT] and Red_x < Canvas_Width - 60:
+        Red_x += speed
+    if pygame.key.get_pressed()[pygame.K_DOWN] and Red_y <= Canvas_Height -50:
+        Red_y += speed
+    if pygame.key.get_pressed()[pygame.K_UP] and 0 <= Red_y:
+        Red_y -= speed
+
+def Shooting_Controls():
+    global blue_last_shot_time, red_last_shot_time,Blue_Hit,Red_Hit
+    current_time = time.time()
+    if current_time - blue_last_shot_time >= blue_bullet_cooldown:
+        if pygame.key.get_pressed()[pygame.K_SPACE]:
+            bullet = pygame.Rect(Blue_x +18,Blue_y + 19,50,10)
+            blue_bullets.append(bullet)
+            Blue_Bullet_Sound.play()
+            blue_last_shot_time = current_time
+
+    for bullet in blue_bullets:
+        bullet.x += 20
+        Canvas.blit(Missile, (bullet.x, bullet.y))
+        if Red_Ship_Physics.colliderect(bullet):
+            pygame.event.post(pygame.event.Event(Red_Hit))
+            blue_bullets.remove(bullet)
+
+    if current_time - red_last_shot_time >= red_bullet_cooldown:
+        if pygame.key.get_pressed()[pygame.K_p]:
+            bullet = pygame.Rect(Red_x -18,Red_y+19 ,50,10)
+            red_bullets.append(bullet)
+            Red_Bullet_Sound.play()
+            red_last_shot_time = current_time
+
+    for bullet in red_bullets:
+        bullet.x -= 20
+        Canvas.blit(Missile2, (bullet.x, bullet.y))
+        if Blue_Ship_Physics.colliderect(bullet):
+            pygame.event.post(pygame.event.Event(Blue_Hit))
+            red_bullets.remove(bullet)
+
+def Health_Setting():
+    global Red_Hit
+    global Blue_Hit
+    global Red_Health
+    global Blue_Health
+    global running
+    global Winner_Font
+    if event.type == Red_Hit:
+        Red_Health -= 1
+    if event.type == Blue_Hit:
+        Blue_Health -= 1
+
+def Winner():
+    global running
+    if Red_Health <= 0:
+        Win_Text = "RED IS MY BITCH"
+        Text = Winner_Font.render(Win_Text,1,"Yellow")
+        Canvas.blit(Text,((Canvas_Width//2) - Text.get_width()//2, (Canvas_Height//2) - Text.get_height()//2))
+        pygame.display.update()
+        pygame.time.delay(2000)
+        running = False
+    if Blue_Health <= 0:
+        Win_Text = "BLUE IS MY BITCH"
+        Text = Winner_Font.render(Win_Text,1,"Yellow")
+        Canvas.blit(Text,((Canvas_Width//2) - Text.get_width()//2, (Canvas_Height//2) - Text.get_height()//2))
+        pygame.display.update()
+        pygame.time.delay(2000)
+        running = False
+
+while running:
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+            running = False
+        Health_Setting()
+    # fill the screen with a color to wipe away anything from last frame
+    Canvas.fill("purple")
+    for x in range(width_range_background):
+        for y in range(height_range_background):
+            Canvas.blit(Background, (x * imageWidth, y * imageHeight))
+            Red_Health_Text = Health_Font.render(str(Red_Health),1,"Yellow")
+            Blue_Health_Text = Health_Font.render(str(Blue_Health),1,"Yellow")
+            Canvas.blit(Blue_Health_Text,(10, 5))
+            Canvas.blit(Red_Health_Text,(Canvas_Width - 85,5))
+            Canvas.blit(Blue_Ship,(Blue_x,Blue_y))
+            Canvas.blit(Red_Ship,(Red_x,Red_y))
+
+            Blue_Ship_Physics = pygame.Rect(Blue_x,Blue_y,Blue_Ship_Width,Blue_Ship_Height)
+            Red_Ship_Physics = pygame.Rect(Red_x,Red_y,Red_Ship_Width,Red_Ship_Height)
+            if Countdown > 0:
+                Countdown_text = Countdown_Font.render(str(Countdown),1,"Yellow")
+                Canvas.blit(Countdown_text,(Canvas_Width//2 - Countdown_text.get_width()//2, Canvas_Height//2 - Countdown_text.get_height()//2))
+                count_timer = pygame.time.get_ticks()
+                if count_timer - last_count > 750:
+                    Countdown -=1
+                    last_count = count_timer
+    # RENDER YOUR GAME HERE
+    Blue_Ship_Controls()
+    Red_Ship_Controls()
+    if Countdown == 0:
+        if show_shoot_text:
+            if shoot_text_start_time == 0:
+                shoot_text_start_time = pygame.time.get_ticks()
+
+            Timer = pygame.time.get_ticks() - shoot_text_start_time
+            if Timer < 1000:
+                Shoot_text = Countdown_Font.render("SHOOT!", 1, "Yellow")
+                Canvas.blit(Shoot_text, (Canvas_Width // 2 - Shoot_text.get_width() // 2, Canvas_Height // 2 - Shoot_text.get_height() // 2))
+            else:
+                show_shoot_text = False
+        else:
+            Shooting_Controls()
+    Winner()
+    # flip() the display to put your work on screen
+    pygame.display.flip()
+
+    clock.tick(60)
+pygame.quit()
